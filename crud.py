@@ -10,11 +10,11 @@ import matplotlib.pyplot as plt
 # ---------- USER ----------
 
 def create_user(db: Session, user: schema.UserCreate):
-
+    from auth_utils import hash_password
     db_user = model.User(
         username=user.username,
         email=user.email,
-        password=user.password,
+        password=hash_password(user.password), 
         role="user"   # (default role)
     )
 
@@ -26,11 +26,15 @@ def create_user(db: Session, user: schema.UserCreate):
 
 
 def login_user(db: Session, user: schema.UserLogin):
-
-    return db.query(model.User).filter(
-        model.User.email == user.email,
-        model.User.password == user.password
+    from auth_utils import verify_password
+    db_user = db.query(model.User).filter(
+        model.User.email == user.email
     ).first()
+    if not db_user:
+        return None
+    if not verify_password(user.password, db_user.password):
+        return None
+    return db_user
 
 
 # ---------- TASKS ----------
